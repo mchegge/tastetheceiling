@@ -2,7 +2,8 @@
   "permissions": {
     "allow": [
       "WebFetch(domain:api.setlist.fm)",
-      "Bash(npx create-next-app@latest . --typescript --tailwind --eslint --app --no-src-dir --import-alias \"@/*\" --yes)"
+      "Bash(npx create-next-app@latest . --typescript --tailwind --eslint --app --no-src-dir --import-alias \"@/*\" --yes)",
+      "Bash(npx shadcn@latest init --defaults)"
     ]
   }
 }

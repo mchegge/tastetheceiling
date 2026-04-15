@@ -1,0 +1,56 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Show {
+  id            String   @id // setlist.fm setlist ID
+  eventDate     DateTime
+  tourName      String?
+  venueName     String
+  venueCity     String
+  venueState    String?
+  venueCountry  String
+  setlistFmUrl  String?
+  createdAt     DateTime @default(now())
+
+  performances  Performance[]
+
+  @@index([eventDate])
+  @@index([tourName])
+}
+
+model Song {
+  id           String   @id @default(cuid())
+  name         String   @unique
+  albumName    String?
+  albumSlug    String?
+  albumYear    Int?
+  albumTrack   Int?
+  createdAt    DateTime @default(now())
+
+  performances Performance[]
+
+  @@index([albumSlug])
+}
+
+model Performance {
+  id        String  @id @default(cuid())
+  showId    String
+  songId    String
+  position  Int     // order in the setlist
+  isEncore  Boolean @default(false)
+  setNumber Int     @default(1) // 1 = main set, 2 = encore, etc.
+  notes     String? // "with Nels Cline", "acoustic", "snippet", etc.
+
+  show      Show    @relation(fields: [showId], references: [id], onDelete: Cascade)
+  song      Song    @relation(fields: [songId], references: [id], onDelete: Cascade)
+
+  @@unique([showId, position])
+  @@index([showId])
+  @@index([songId])
+}
