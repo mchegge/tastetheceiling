@@ -62,7 +62,7 @@ export default async function ShowsPage({
 
       <div className="flex gap-6">
         {/* Sidebar filters */}
-        <aside className="hidden lg:block w-52 shrink-0">
+        <aside className="hidden lg:block w-36 shrink-0">
           <div className="mb-6">
             <h3 className="text-sm font-semibold text-zinc-500 uppercase tracking-wider mb-2">Year</h3>
             <div className="space-y-0.5">
