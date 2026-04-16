@@ -192,5 +192,12 @@ export async function refreshRecentShows(): Promise<void> {
   }
 
   const newlyTagged = await tagAlbums();
+
+  await prisma.siteMetadata.upsert({
+    where: { key: "lastRefreshedAt" },
+    update: { value: new Date().toISOString() },
+    create: { key: "lastRefreshedAt", value: new Date().toISOString() },
+  });
+
   console.log(`[refresh] Done. ${processed} shows, ${skipped} skipped, ${newlyTagged} new songs tagged.`);
 }
