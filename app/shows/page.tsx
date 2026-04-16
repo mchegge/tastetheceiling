@@ -20,26 +20,29 @@ function formatDateShort(d: Date) {
 export default async function ShowsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ year?: string; tour?: string; page?: string }>;
+  searchParams: Promise<{ year?: string; tour?: string; page?: string; recording?: string }>;
 }) {
-  const { year: rawYear, tour, page: rawPage } = await searchParams;
+  const { year: rawYear, tour, page: rawPage, recording } = await searchParams;
   const year = rawYear ? parseInt(rawYear, 10) : undefined;
   const page = rawPage ? Math.max(1, parseInt(rawPage, 10)) : 1;
+  const hasRecording = recording === "1";
 
   const [{ shows, total }, { years, tours }] = await Promise.all([
-    getShows({ year, tour, page }),
+    getShows({ year, tour, page, hasRecording }),
     getShowFilters(),
   ]);
 
   const totalPages = Math.ceil(total / PAGE_SIZE);
 
-  function buildHref(overrides: { year?: number | null; tour?: string | null; page?: number }) {
+  function buildHref(overrides: { year?: number | null; tour?: string | null; page?: number; recording?: boolean | null }) {
     const params = new URLSearchParams();
     const y = "year" in overrides ? overrides.year : year;
     const t = "tour" in overrides ? overrides.tour : tour;
+    const r = "recording" in overrides ? overrides.recording : hasRecording;
     const p = overrides.page ?? 1;
     if (y) params.set("year", String(y));
     if (t) params.set("tour", t);
+    if (r) params.set("recording", "1");
     if (p > 1) params.set("page", String(p));
     const qs = params.toString();
     return `/shows${qs ? `?${qs}` : ""}`;
@@ -82,6 +85,29 @@ export default async function ShowsPage({
                   {y}
                 </Link>
               ))}
+            </div>
+          </div>
+
+          <div className="mb-6">
+            <h3 className="text-sm font-semibold text-zinc-500 uppercase tracking-wider mb-2">Recordings</h3>
+            <div className="space-y-0.5">
+              <Link
+                href={buildHref({ recording: null })}
+                className={`block px-2 py-1.5 rounded transition-colors ${
+                  !hasRecording ? "text-white bg-zinc-700" : "text-zinc-400 hover:text-white hover:bg-zinc-800"
+                }`}
+              >
+                All shows
+              </Link>
+              <Link
+                href={buildHref({ recording: true, page: 1 })}
+                className={`flex items-center gap-2 px-2 py-1.5 rounded transition-colors ${
+                  hasRecording ? "text-white bg-zinc-700" : "text-zinc-400 hover:text-white hover:bg-zinc-800"
+                }`}
+              >
+                <span className="w-1.5 h-1.5 rounded-full bg-orange-400 shrink-0" />
+                With recording
+              </Link>
             </div>
           </div>
 
@@ -161,7 +187,12 @@ export default async function ShowsPage({
                       )}
                     </td>
                     <td className="px-4 py-3 text-right text-zinc-400 tabular-nums">
-                      {show.songCount}
+                      <div className="flex items-center justify-end gap-2">
+                        {show.hasRecording && (
+                          <span className="w-1.5 h-1.5 rounded-full bg-orange-400 shrink-0" title="Has recording" />
+                        )}
+                        {show.songCount}
+                      </div>
                     </td>
                   </tr>
                 ))}

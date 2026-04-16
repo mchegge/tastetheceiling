@@ -37,10 +37,11 @@ export default async function HomePage() {
       </div>
 
       {/* Big stat cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-10">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mb-10">
         <BigStat value={stats.totalShows.toLocaleString()} label="Shows" href="/shows" />
         <BigStat value={stats.totalSongs.toLocaleString()} label="Unique Songs" href="/songs" />
         <BigStat value={stats.totalPerformances.toLocaleString()} label="Total Songs Played" href="/songs" />
+        <BigStat value={stats.totalRecordings.toLocaleString()} label="Shows Recorded" href="/shows?recording=1" />
         <BigStat
           value={years ? `${years}` : "30+"}
           label="Years"

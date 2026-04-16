@@ -154,6 +154,7 @@ export type ShowRow = {
   tourName: string | null;
   setlistFmUrl: string | null;
   songCount: number;
+  hasRecording: boolean;
 };
 
 export async function getShowFilters() {
@@ -180,6 +181,7 @@ export async function getShows(filters: {
   year?: number;
   tour?: string;
   page?: number;
+  hasRecording?: boolean;
 }): Promise<{ shows: ShowRow[]; total: number }> {
   const PAGE_SIZE = 50;
   const page = filters.page ?? 1;
@@ -195,6 +197,7 @@ export async function getShows(filters: {
         }
       : {}),
     ...(filters.tour ? { tourName: filters.tour } : {}),
+    ...(filters.hasRecording ? { recordings: { some: {} } } : {}),
   };
 
   const [rawShows, total] = await Promise.all([
@@ -203,7 +206,9 @@ export async function getShows(filters: {
       orderBy: { eventDate: "desc" },
       skip,
       take: PAGE_SIZE,
-      include: { _count: { select: { performances: true } } },
+      include: {
+        _count: { select: { performances: true, recordings: true } },
+      },
     }),
     prisma.show.count({ where }),
   ]);
@@ -219,6 +224,7 @@ export async function getShows(filters: {
       tourName: s.tourName,
       setlistFmUrl: s.setlistFmUrl,
       songCount: s._count.performances,
+      hasRecording: s._count.recordings > 0,
     })),
     total,
   };
@@ -516,6 +522,7 @@ export async function getHeroStats() {
     totalShows,
     totalSongs,
     totalPerformances,
+    totalRecordings,
     topSongs,
     gapLeaders,
     recentShows,
@@ -527,6 +534,8 @@ export async function getHeroStats() {
     prisma.song.count({ where: { performances: { some: {} } } }),
 
     prisma.performance.count(),
+
+    prisma.show.count({ where: { recordings: { some: {} } } }),
 
     prisma.song.findMany({
       take: 5,
@@ -571,6 +580,7 @@ export async function getHeroStats() {
     totalShows,
     totalSongs,
     totalPerformances,
+    totalRecordings,
     topSongs: topSongs.map((s) => ({
       name: s.name,
       plays: s._count.performances,
