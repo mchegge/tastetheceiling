@@ -377,6 +377,13 @@ export async function getErasData(): Promise<{
   return { chartData, albums };
 }
 
+// ── Site metadata ─────────────────────────────────────────────────────────────
+
+export async function getLastRefreshed(): Promise<Date | null> {
+  const row = await prisma.siteMetadata.findUnique({ where: { key: "lastRefreshedAt" } });
+  return row ? new Date(row.value) : null;
+}
+
 // ── Show recordings ───────────────────────────────────────────────────────────
 
 export type ShowRecordingRow = {

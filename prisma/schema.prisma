@@ -51,6 +51,13 @@ model Song {
   @@index([albumSlug])
 }
 
+model SiteMetadata {
+  key   String @id
+  value String
+
+  @@map("site_metadata")
+}
+
 model Performance {
   id        String  @id @default(cuid())
   showId    String

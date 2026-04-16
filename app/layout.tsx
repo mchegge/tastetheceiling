@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import Link from "next/link";
+import { getLastRefreshed } from "@/lib/queries";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -18,11 +19,16 @@ export const metadata: Metadata = {
   description: "Deep stats on every Wilco show, every song, every era.",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const lastRefreshed = await getLastRefreshed().catch(() => null);
+  const refreshedLabel = lastRefreshed
+    ? lastRefreshed.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
+    : null;
+
   return (
     <html
       lang="en"
@@ -62,16 +68,32 @@ export default function RootLayout({
           </div>
         </header>
         <main className="flex-1">{children}</main>
-        <footer className="border-t border-zinc-800 py-6 text-center text-sm text-zinc-600">
-          Data from{" "}
-          <a
-            href="https://www.setlist.fm"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="underline hover:text-zinc-400 transition-colors"
-          >
-            setlist.fm
-          </a>
+        <footer className="border-t border-zinc-800 py-6 text-sm text-zinc-600">
+          <div className="max-w-6xl mx-auto px-4 flex items-center justify-between gap-4">
+            <span>
+              Data from{" "}
+              <a
+                href="https://www.setlist.fm"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="underline hover:text-zinc-400 transition-colors"
+              >
+                setlist.fm
+              </a>
+              {" "}and{" "}
+              <a
+                href="https://archive.org"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="underline hover:text-zinc-400 transition-colors"
+              >
+                Internet Archive
+              </a>
+            </span>
+            {refreshedLabel && (
+              <span>Last refreshed: {refreshedLabel}</span>
+            )}
+          </div>
         </footer>
       </body>
     </html>
