@@ -4,6 +4,8 @@ import Link from "next/link";
 import { getShowById } from "@/lib/queries";
 import { albumColor, ALBUM_ART } from "@/lib/album-colors";
 
+export const dynamic = "force-dynamic";
+
 type Props = { params: Promise<{ id: string }> };
 
 export async function generateMetadata({ params }: Props) {

@@ -3,6 +3,8 @@ import { getSongRoles } from "@/lib/queries";
 import { albumColor } from "@/lib/album-colors";
 import type { SongRoleRow } from "@/lib/queries";
 
+export const dynamic = "force-dynamic";
+
 export const metadata = { title: "Openers & Closers — Wilco Stats" };
 
 function RoleLeaderboard({

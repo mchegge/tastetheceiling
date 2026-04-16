@@ -2,6 +2,7 @@ import Link from "next/link";
 import { getSongs, SongSort } from "@/lib/queries";
 import { albumColor } from "@/lib/album-colors";
 
+export const dynamic = "force-dynamic";
 export const metadata = { title: "Songs — Wilco Stats" };
 
 const SORTS: { key: SongSort; label: string }[] = [

@@ -3,6 +3,8 @@ import { getErasData } from "@/lib/queries";
 import { albumColor, ALBUM_ART } from "@/lib/album-colors";
 import { ErasChart } from "./ErasChart";
 
+export const dynamic = "force-dynamic";
+
 export const metadata = { title: "Eras — Wilco Stats" };
 
 export default async function ErasPage() {

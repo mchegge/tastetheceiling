@@ -2,6 +2,7 @@ import Link from "next/link";
 import { getShows, getShowFilters } from "@/lib/queries";
 import { YearSelect } from "./YearSelect";
 
+export const dynamic = "force-dynamic";
 export const metadata = { title: "Shows — Wilco Stats" };
 
 const PAGE_SIZE = 50;

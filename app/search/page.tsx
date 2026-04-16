@@ -3,6 +3,8 @@ import { search } from "@/lib/queries";
 import { albumColor } from "@/lib/album-colors";
 import { SearchInput } from "./SearchInput";
 
+export const dynamic = "force-dynamic";
+
 export const metadata = { title: "Search — Wilco Stats" };
 
 function formatDate(d: Date) {

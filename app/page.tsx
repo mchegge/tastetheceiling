@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { getHeroStats } from "@/lib/queries";
 
+export const dynamic = "force-dynamic";
+
 function formatDate(d: Date) {
   return new Date(d).toLocaleDateString("en-US", {
     month: "short",
