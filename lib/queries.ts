@@ -371,6 +371,120 @@ export async function getErasData(): Promise<{
   return { chartData, albums };
 }
 
+// ── Song roles (opener / closer) ─────────────────────────────────────────────
+
+export type SongRoleRow = {
+  id: string;
+  name: string;
+  albumName: string | null;
+  albumSlug: string | null;
+  openerCount: number;
+  closerCount: number;
+  encoreOpenerCount: number;
+  encoreCloserCount: number;
+};
+
+export async function getSongRoles(): Promise<SongRoleRow[]> {
+  return prisma.$queryRaw<SongRoleRow[]>`
+    WITH show_positions AS (
+      SELECT
+        "showId",
+        MIN(CASE WHEN NOT "isEncore" THEN position END) AS first_main,
+        MAX(CASE WHEN NOT "isEncore" THEN position END) AS last_main,
+        MIN(CASE WHEN     "isEncore" THEN position END) AS first_encore,
+        MAX(CASE WHEN     "isEncore" THEN position END) AS last_encore
+      FROM "Performance"
+      GROUP BY "showId"
+    )
+    SELECT
+      s.id,
+      s.name,
+      s."albumName",
+      s."albumSlug",
+      COUNT(CASE WHEN NOT p."isEncore" AND p.position = sp.first_main   THEN 1 END)::int AS "openerCount",
+      COUNT(CASE WHEN NOT p."isEncore" AND p.position = sp.last_main    THEN 1 END)::int AS "closerCount",
+      COUNT(CASE WHEN     p."isEncore" AND p.position = sp.first_encore THEN 1 END)::int AS "encoreOpenerCount",
+      COUNT(CASE WHEN     p."isEncore" AND p.position = sp.last_encore  THEN 1 END)::int AS "encoreCloserCount"
+    FROM "Song" s
+    JOIN "Performance" p  ON p."songId"  = s.id
+    JOIN show_positions sp ON sp."showId" = p."showId"
+    GROUP BY s.id, s.name, s."albumName", s."albumSlug"
+    HAVING
+      COUNT(CASE WHEN NOT p."isEncore" AND p.position = sp.first_main   THEN 1 END) > 0
+      OR COUNT(CASE WHEN NOT p."isEncore" AND p.position = sp.last_main    THEN 1 END) > 0
+      OR COUNT(CASE WHEN     p."isEncore" AND p.position = sp.first_encore THEN 1 END) > 0
+      OR COUNT(CASE WHEN     p."isEncore" AND p.position = sp.last_encore  THEN 1 END) > 0
+    ORDER BY "openerCount" DESC
+  `;
+}
+
+// ── Search ────────────────────────────────────────────────────────────────────
+
+export type SearchResults = {
+  songs: Array<{
+    name: string;
+    albumName: string | null;
+    albumSlug: string | null;
+    playCount: number;
+  }>;
+  shows: Array<{
+    id: string;
+    eventDate: Date;
+    venueName: string;
+    venueCity: string;
+    venueState: string | null;
+    venueCountry: string;
+    tourName: string | null;
+    songCount: number;
+  }>;
+};
+
+export async function search(query: string): Promise<SearchResults> {
+  const q = query.trim();
+  if (!q) return { songs: [], shows: [] };
+
+  const [songs, shows] = await Promise.all([
+    prisma.song.findMany({
+      where: { name: { contains: q, mode: "insensitive" } },
+      orderBy: { performances: { _count: "desc" } },
+      take: 10,
+      include: { _count: { select: { performances: true } } },
+    }),
+    prisma.show.findMany({
+      where: {
+        OR: [
+          { venueName:    { contains: q, mode: "insensitive" } },
+          { venueCity:    { contains: q, mode: "insensitive" } },
+          { venueState:   { contains: q, mode: "insensitive" } },
+          { tourName:     { contains: q, mode: "insensitive" } },
+        ],
+      },
+      orderBy: { eventDate: "desc" },
+      take: 20,
+      include: { _count: { select: { performances: true } } },
+    }),
+  ]);
+
+  return {
+    songs: songs.map((s) => ({
+      name: s.name,
+      albumName: s.albumName,
+      albumSlug: s.albumSlug,
+      playCount: s._count.performances,
+    })),
+    shows: shows.map((s) => ({
+      id: s.id,
+      eventDate: s.eventDate,
+      venueName: s.venueName,
+      venueCity: s.venueCity,
+      venueState: s.venueState,
+      venueCountry: s.venueCountry,
+      tourName: s.tourName,
+      songCount: s._count.performances,
+    })),
+  };
+}
+
 // ── Homepage stats ────────────────────────────────────────────────────────────
 
 export async function getHeroStats() {

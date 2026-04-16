@@ -40,7 +40,7 @@ export default async function SongsPage({
       </div>
 
       {/* Sort tabs */}
-      <div className="flex flex-wrap gap-2 mb-6">
+      <div className="flex flex-wrap items-center gap-2 mb-6">
         {SORTS.map((s) => (
           <Link
             key={s.key}
@@ -54,6 +54,12 @@ export default async function SongsPage({
             {s.label}
           </Link>
         ))}
+        <Link
+          href="/songs/roles"
+          className="ml-auto px-4 py-2 rounded-full text-sm font-medium bg-zinc-800/50 text-zinc-500 hover:bg-zinc-700 hover:text-zinc-200 transition-colors border border-zinc-700"
+        >
+          Openers &amp; Closers →
+        </Link>
       </div>
 
       {/* Table */}

@@ -37,17 +37,28 @@ export default function RootLayout({
             >
               Taste the Ceiling — Wilco Live Stats
             </Link>
-            <nav className="flex items-center gap-6 text-base text-zinc-400">
-              <Link href="/songs" className="hover:text-white transition-colors">
-                Songs
-              </Link>
-              <Link href="/shows" className="hover:text-white transition-colors">
-                Shows
-              </Link>
-              <Link href="/eras" className="hover:text-white transition-colors">
-                Eras
-              </Link>
-            </nav>
+            <div className="flex items-center gap-6">
+              <nav className="hidden sm:flex items-center gap-6 text-base text-zinc-400">
+                <Link href="/songs" className="hover:text-white transition-colors">
+                  Songs
+                </Link>
+                <Link href="/shows" className="hover:text-white transition-colors">
+                  Shows
+                </Link>
+                <Link href="/eras" className="hover:text-white transition-colors">
+                  Eras
+                </Link>
+              </nav>
+              <form method="GET" action="/search">
+                <input
+                  type="search"
+                  name="q"
+                  placeholder="Search…"
+                  autoComplete="off"
+                  className="bg-zinc-900 border border-zinc-700 rounded-lg px-3 py-1.5 text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-zinc-500 w-36 focus:w-52 transition-all"
+                />
+              </form>
+            </div>
           </div>
         </header>
         <main className="flex-1">{children}</main>
