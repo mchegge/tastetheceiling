@@ -18,9 +18,23 @@ model Show {
   createdAt     DateTime @default(now())
 
   performances  Performance[]
+  recordings    ShowRecording[]
 
   @@index([eventDate])
   @@index([tourName])
+}
+
+model ShowRecording {
+  id           String @id @default(cuid())
+  showId       String
+  archiveOrgId String
+  title        String
+  downloads    Int    @default(0)
+
+  show         Show   @relation(fields: [showId], references: [id], onDelete: Cascade)
+
+  @@unique([showId, archiveOrgId])
+  @@index([showId])
 }
 
 model Song {
