@@ -1,7 +1,7 @@
 import Image from "next/image";
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { getShowById } from "@/lib/queries";
+import { getShowById, getShowRecordings } from "@/lib/queries";
 import { albumColor, ALBUM_ART } from "@/lib/album-colors";
 
 export const dynamic = "force-dynamic";
@@ -26,7 +26,10 @@ function formatDateShort(d: Date) {
 
 export default async function ShowPage({ params }: Props) {
   const { id } = await params;
-  const show = await getShowById(id);
+  const [show, { recordings, totalCount }] = await Promise.all([
+    getShowById(id),
+    getShowRecordings(id),
+  ]);
 
   if (!show) notFound();
 
@@ -135,6 +138,46 @@ export default async function ShowPage({ params }: Props) {
           </div>
         </div>
       </div>
+
+      {/* Recordings */}
+      {recordings.length > 0 && (
+        <div className="rounded-lg border border-zinc-800 bg-zinc-900/40 p-5 mb-8">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-sm font-semibold text-zinc-400 uppercase tracking-wider">
+              Recordings
+            </h3>
+            {totalCount > 5 && (
+              <a
+                href={`https://archive.org/search?query=creator%3A%22Wilco%22+${new Date(show.eventDate).toISOString().split("T")[0]}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-sm text-zinc-600 hover:text-zinc-400 transition-colors"
+              >
+                {totalCount - 5} more on Archive.org ↗
+              </a>
+            )}
+          </div>
+          <ul className="space-y-2">
+            {recordings.map((rec) => (
+              <li key={rec.archiveOrgId}>
+                <a
+                  href={`https://archive.org/details/${rec.archiveOrgId}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center justify-between gap-4 group"
+                >
+                  <span className="text-zinc-300 group-hover:text-white transition-colors text-sm truncate">
+                    {rec.title}
+                  </span>
+                  <span className="text-zinc-600 text-xs shrink-0 tabular-nums">
+                    {rec.downloads.toLocaleString()} downloads
+                  </span>
+                </a>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       {/* Setlist */}
       <SetSection title="Set" songs={mainSet} />

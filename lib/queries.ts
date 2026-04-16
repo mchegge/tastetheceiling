@@ -371,6 +371,30 @@ export async function getErasData(): Promise<{
   return { chartData, albums };
 }
 
+// ── Show recordings ───────────────────────────────────────────────────────────
+
+export type ShowRecordingRow = {
+  archiveOrgId: string;
+  title: string;
+  downloads: number;
+};
+
+export async function getShowRecordings(showId: string): Promise<{
+  recordings: ShowRecordingRow[];
+  totalCount: number;
+}> {
+  const all = await prisma.showRecording.findMany({
+    where: { showId },
+    orderBy: { downloads: "desc" },
+    select: { archiveOrgId: true, title: true, downloads: true },
+  });
+
+  return {
+    recordings: all.slice(0, 5),
+    totalCount: all.length,
+  };
+}
+
 // ── Song roles (opener / closer) ─────────────────────────────────────────────
 
 export type SongRoleRow = {
