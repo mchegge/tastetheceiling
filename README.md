@@ -1,36 +1,132 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Taste the Ceiling — Wilco Live Stats
 
-## Getting Started
+Deep stats on every Wilco show, every song, every era. Powered by setlist.fm data covering 1,900+ concerts from 1994 to the present.
 
-First, run the development server:
+## Features
+
+- **Songs** — play counts, first/last played dates, gap tracker (shows since last performance), year-by-year bar charts, full performance history
+- **Shows** — browse all shows by year or tour, full setlists with album badges, per-show album breakdown
+- **Eras** — stacked bar chart of songs played per year broken down by album era, with toggle between raw count and percentage views
+- **Homepage** — hero stats (total shows, unique songs, total performances, years active), most-played songs, longest current gaps, recent shows
+
+## Tech Stack
+
+| Layer | Technology |
+|---|---|
+| Framework | Next.js 16 (App Router) |
+| Language | TypeScript |
+| Database | PostgreSQL 16 |
+| ORM | Prisma 7 |
+| Charts | Recharts |
+| Styling | Tailwind CSS v4 |
+| Runtime | Node.js 20 |
+| Infrastructure | Docker Compose |
+
+## Prerequisites
+
+- [Docker Desktop](https://www.docker.com/products/docker-desktop/) installed and running
+- A [setlist.fm API key](https://www.setlist.fm/settings/api) (free account required)
+
+## Setup
+
+**1. Clone the repo**
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+git clone https://github.com/mchegge/tastetheceiling.git
+cd tastetheceiling
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+**2. Configure environment**
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+cp .env.example .env.local
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Open `.env.local` and set your setlist.fm API key:
 
-## Learn More
+```
+SETLISTFM_API_KEY=your_key_here
+```
 
-To learn more about Next.js, take a look at the following resources:
+`DATABASE_URL` is handled automatically by Docker Compose — leave it alone.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+**3. Start the containers**
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```bash
+docker compose up -d
+```
 
-## Deploy on Vercel
+This starts the Next.js app on port 3000 and a PostgreSQL database. The app will wait for the database to be healthy before starting.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+**4. Run the database migration**
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```bash
+docker compose exec app npx prisma migrate deploy
+```
+
+**5. Ingest Wilco setlist data**
+
+This crawls all ~1,900 shows from setlist.fm. It respects the API's 1 req/sec rate limit, so it takes roughly 35 minutes to complete.
+
+```bash
+docker compose exec app npx tsx scripts/ingest.ts
+```
+
+**6. Tag songs with album metadata**
+
+Maps song names to their source album (play counts, era charts, and album art all depend on this).
+
+```bash
+docker compose exec app npx tsx scripts/seed-albums.ts
+```
+
+**7. Open the app**
+
+Visit [http://localhost:3000](http://localhost:3000).
+
+## Environment Variables
+
+| Variable | Description | Where to get it |
+|---|---|---|
+| `SETLISTFM_API_KEY` | setlist.fm REST API key | [setlist.fm/settings/api](https://www.setlist.fm/settings/api) |
+| `DATABASE_URL` | PostgreSQL connection string | Set automatically by Docker Compose |
+
+## Keeping Data Fresh
+
+A monthly refresh runs automatically on the 1st of each month at 3am. It fetches the 3 most recent pages from setlist.fm (~60 shows) and upserts any new data. No action needed — it runs as long as the app container is up.
+
+To trigger a refresh manually:
+
+```bash
+# Recent shows only (~3 seconds)
+docker compose exec app node -e "require('./lib/refresh').refreshRecentShows()"
+
+# Full re-crawl of all shows (~35 minutes)
+docker compose exec app npx tsx scripts/ingest.ts
+docker compose exec app npx tsx scripts/seed-albums.ts
+```
+
+## Project Structure
+
+```
+app/
+  page.tsx              # Homepage with hero stats
+  songs/                # Songs index + song detail pages
+  shows/                # Shows browser + show detail pages
+  eras/                 # Eras chart and breakdown table
+lib/
+  queries.ts            # All database queries
+  prisma.ts             # Prisma client singleton
+  album-colors.ts       # Album color mappings and cover art URLs
+  refresh.ts            # Recent-shows refresh logic (used by cron)
+scripts/
+  ingest.ts             # Full setlist.fm crawl
+  seed-albums.ts        # Maps song names to albums
+prisma/
+  schema.prisma         # Show, Song, Performance models
+instrumentation.ts      # Schedules monthly refresh on server start
+```
+
+## Data Source
+
+Show and setlist data from [setlist.fm](https://www.setlist.fm). Album art from the [MusicBrainz Cover Art Archive](https://coverartarchive.org).
